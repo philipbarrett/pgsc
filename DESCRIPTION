@@ -1,0 +1,11 @@
+Package: pgsc
+Type: Package
+Title: Computes Powell's generalized synthetic control estimator
+Version: 1.0
+Date: 2018-09-13
+Author: Philip Barrett
+Maintainer: pobarrett@gmail.com
+Description: Computes the generalized synthetic control estimator desribed in Powell's 2017 paper "Synthetic Control Estimation Beyond Case Studies: Does the Minimum Wage Reduce Employment?"
+License: GPL-2
+Imports: Rcpp (>= 0.12.18), nloptr
+LinkingTo: Rcpp, RcppArmadillo
