@@ -1,0 +1,136 @@
+---
+title: "Using `pgsc`"
+author: "Philip Barrett"
+date: "`r Sys.Date()`"
+output: rmarkdown::pdf_document
+bibliography: biblio.bib
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+The `gsc` package computes the generalized synthetic control estimator described in [@powell2017synthetic].  The estimator controls for a rich specification of omitted variables in a panel, beyond those covered by time and unit fixed effects (e.g. spatially-correlated time fixed effects).  This vignette describes an extended example which illustrates how to generate point estimates, as well as how to test hypotheses using both a standard bootstrap and a constrained-estimator approach described in [@powell2017synthetic].
+
+# Data generating process
+
+We start by generating data using a process which cannot be recovered using a simple fixed effects model.  The data generating process is:
+
+$$ Y_{it} = \alpha_i + \eta_t +  \mu_i ' \lambda_t + b ' D_{it} + r'X_{it} + \epsilon_{it}$$
+
+So the $\alpha_i$ and $\eta_t$ are standard time and unit fixed effects, $\lambda_t$ is a $Q$-dimensional vector of time-varying factors with unit-specific weights $\mu_i$, the $D_{it}$ is an $M$-dimensional vector of continuous treatments, and the $X_{it}$ are vectors of observed counfounding variables.  The primary objective of inquiry is to recover $b$, the impact of the treatment.  Because the $\lambda_t$ and $\mu_i$ are unobserved if they are correlated with the treatments, then a standard time and unit fixed effects regression will fail to recover the parameter of interest, $b$.
+
+We generate such a data set as follows:
+
+
+```{r}
+
+library(pgsc)
+
+### Parameters ###
+NN <- 20                    # Number of units
+TT <- 100                   # Number of periods
+MM <- 2                     # Number of treatments
+RR <- 3                     # Number of covariates
+SS <- 2                     # Number of unit FEs
+QQ <- 3                     # Number of time FEs
+b <- c(1,2)                 # Treatment coefficients
+sq <- matrix( c( 1, .2, .3, -.9, -.1, .2 ), nrow=SS, ncol=QQ )
+                            # Weighting matrix on time-varying factors
+p <- t( matrix(c( -1, 0, .2, .5, .2, 0), nrow=MM, ncol=RR ) )  
+                            # The covariance of X and D
+r <- .1 * c( .5, 1, 2)      # Coefficient on observed covariates
+sig <- .2                   # Noise sd
+sig.y <- 5                  # Unit FEs
+sig.t <- 4                  # Time FE noise
+
+### Data
+set.seed(42)
+fes <- matrix( rnorm(NN * SS, 0, sig.y), NN, SS )    # Unit fixed effects
+tfes <- matrix( rnorm(TT * QQ, 0, sig.t ), TT, QQ )  # Time fixed effects
+X <- array( rnorm(NN*RR*TT), c( NN, RR, TT ))        # Covariates
+D <- array(NA, dim=c( NN, MM, TT ))
+D[] <- apply(X, 3, function(x) x%*%p) 
+D <- D + array( rnorm(NN*MM*TT), c( NN, MM, TT ))               # Treatments, correlated with X
+Y <- sapply( 1:TT, function(i) D[,,i] %*% b + X[,,i] %*% r ) +  # Treatment & covariates
+  fes[,1] + rep(1,NN) %*% t(tfes[,1]) +                         # FEs and TFE
+  fes %*% sq %*% t(tfes) +                                      # Time-unit interaction
+  rnorm( NN*TT, 0, sig )                                        # Noise
+dta <- data.frame( n=state.abb[1:NN], t=rep(1:TT,each=NN), y=c(Y),
+                   do.call(rbind,lapply(1:TT,function(i)D[,,i])),
+                   do.call(rbind,lapply(1:TT,function(i)X[,,i])) )
+names(dta) <- c('n','t','y', paste0('D',1:MM), paste0('X',1:RR) )
+    # Bind into a data frame
+```
+
+The parameter $b$ that we wish to recover has value $(1,2)'$.
+
+# Panel regression
+
+The panel regression fails to recover the correct value of $b$ due to the correlation of $X_{it}$ with $D_{it}$:
+
+```{r}
+### Panel regression
+library(plm)
+pan <- plm( y ~ D1 + D2 + X1 + X2 + X3, dta, effect = 'twoways', index = c('n','t'))
+summary(pan)
+```
+
+
+# The generalized synthetic control estimator: Point estimates
+
+The GSC estimator provides a vector of coefficients $\hat b$ and an estimated weighing matrix $W$ solving:
+
+$$
+\begin{aligned}
+  (\hat b, \hat W) & = \arg\min_{b,W} \frac{1}{2NT} \sum_{i=1}^N \sum_{t=1}^T\left[ Y_{it} - b'D_{it} - \sum_{j\ne i} w_{ij} \left( Y_{jt} - b'D_{jt} \right)  \right]^2 \\
+  \text{s.t. } \ &\forall \ i:  \sum_{j \ne i} w_{ij} = 1
+\end{aligned}
+$$
+
+In other words, the GSC estimator minimizes the squared difference in outcomes unexplained by the treatment variable (i.e. the omitted variables), between each unit and a unit-specific counterfactual.  The counterfactual itself is a weighted average of the other units.
+
+The function `gsc.wrapper` computes a number of variants of the GSC estimator using an iterative approach.  It works by optimizing over the coefficients $b$ and the weights $W$ each in turn, iterating until the maximum differnece in iterations is suitably close to zero.[^1]
+
+[^1]: This is slower than solving simultaneously for weights and parameters, but seems to be much more reliable. Presumably, this is because the simultaneous solution is a fourth order problem, whereas the individual weight/coefficient minimization problems are quadratic at each step.  This improves convergence in a numerical optimizer. 
+
+```{r}
+
+### Compute the point estimate
+library(nloptr)
+wt.init <- matrix( 1 / (NN-1), NN, NN-2 )
+b.init <- pan$coefficients[c('D1','D2')]
+sol.it <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init, method='onestep')
+summary(sol.it)
+```
+
+While the resulting estimates are superior to the fixed effects panel estimates, they still differ considerably from the true value.  The `pgsc` package therefore provides functionality to compute two-step estimators suggested in [@powell2017synthetic], which re-weight the objctive function to minimize the impact of the units where the model fit is bad.  There are two two-step variants: an "average" one which uses the average unit-specific error from the one-step estimator, and an "individual" one which allows for unit-specific estimates of $b$ in the first stage.  These can be computed as follows:
+
+```{r}
+
+### Compute point estimates from the two-step estimators
+sol.2.step.aggte <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = sol.it$b, method='twostep.aggte')
+sol.2.step.indiv <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = sol.2.step.aggte$b, method='twostep.indiv')
+sol.compare <- rbind( pan$coefficients[c('D1','D2')], sol.it$b, sol.2.step.aggte$b, sol.2.step.indiv$b, b )
+rownames(sol.compare) <- c( 'Panel FEs', 'GSC onestep', 'Aggte two-step GSC', 'Indiv two-step GSC', 'Truth')
+print(sol.compare)
+```
+
+# The generalized synthetic control estimator: Hypothesis testing
+
+# Todos
+
+Documentation for wrapper.  A plot function for a GSC object, esp weights.
+
+
+
+# References

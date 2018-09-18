@@ -6,55 +6,116 @@
 
 using namespace Rcpp;
 
-// rcpparma_hello_world
-arma::mat rcpparma_hello_world();
-RcppExport SEXP _pgsc_rcpparma_hello_world() {
+// W_extract
+arma::mat W_extract(arma::mat wt, int N);
+RcppExport SEXP _pgsc_W_extract(SEXP wtSEXP, SEXP NSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(rcpparma_hello_world());
+    Rcpp::traits::input_parameter< arma::mat >::type wt(wtSEXP);
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    rcpp_result_gen = Rcpp::wrap(W_extract(wt, N));
     return rcpp_result_gen;
 END_RCPP
 }
-// rcpparma_outerproduct
-arma::mat rcpparma_outerproduct(const arma::colvec& x);
-RcppExport SEXP _pgsc_rcpparma_outerproduct(SEXP xSEXP) {
+// gsc_target
+double gsc_target(int N, int T, arma::mat wt, arma::mat Y, arma::cube D, arma::vec b, arma::vec sig_i, int print_level, double pen_gain, bool return_n_obs);
+RcppExport SEXP _pgsc_gsc_target(SEXP NSEXP, SEXP TSEXP, SEXP wtSEXP, SEXP YSEXP, SEXP DSEXP, SEXP bSEXP, SEXP sig_iSEXP, SEXP print_levelSEXP, SEXP pen_gainSEXP, SEXP return_n_obsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_outerproduct(x));
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< int >::type T(TSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type wt(wtSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type D(DSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type b(bSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type sig_i(sig_iSEXP);
+    Rcpp::traits::input_parameter< int >::type print_level(print_levelSEXP);
+    Rcpp::traits::input_parameter< double >::type pen_gain(pen_gainSEXP);
+    Rcpp::traits::input_parameter< bool >::type return_n_obs(return_n_obsSEXP);
+    rcpp_result_gen = Rcpp::wrap(gsc_target(N, T, wt, Y, D, b, sig_i, print_level, pen_gain, return_n_obs));
     return rcpp_result_gen;
 END_RCPP
 }
-// rcpparma_innerproduct
-double rcpparma_innerproduct(const arma::colvec& x);
-RcppExport SEXP _pgsc_rcpparma_innerproduct(SEXP xSEXP) {
+// gsc_target_grad_num
+arma::vec gsc_target_grad_num(int N, int T, arma::mat wt, arma::mat Y, arma::cube D, arma::vec b, arma::vec sig_i, double inc, double pen_gain);
+RcppExport SEXP _pgsc_gsc_target_grad_num(SEXP NSEXP, SEXP TSEXP, SEXP wtSEXP, SEXP YSEXP, SEXP DSEXP, SEXP bSEXP, SEXP sig_iSEXP, SEXP incSEXP, SEXP pen_gainSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_innerproduct(x));
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< int >::type T(TSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type wt(wtSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type D(DSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type b(bSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type sig_i(sig_iSEXP);
+    Rcpp::traits::input_parameter< double >::type inc(incSEXP);
+    Rcpp::traits::input_parameter< double >::type pen_gain(pen_gainSEXP);
+    rcpp_result_gen = Rcpp::wrap(gsc_target_grad_num(N, T, wt, Y, D, b, sig_i, inc, pen_gain));
     return rcpp_result_gen;
 END_RCPP
 }
-// rcpparma_bothproducts
-Rcpp::List rcpparma_bothproducts(const arma::colvec& x);
-RcppExport SEXP _pgsc_rcpparma_bothproducts(SEXP xSEXP) {
+// gsc_target_grad
+arma::vec gsc_target_grad(int N, int T, arma::mat wt, arma::mat Y, arma::cube D, arma::vec b, arma::vec sig_i, double pen_gain);
+RcppExport SEXP _pgsc_gsc_target_grad(SEXP NSEXP, SEXP TSEXP, SEXP wtSEXP, SEXP YSEXP, SEXP DSEXP, SEXP bSEXP, SEXP sig_iSEXP, SEXP pen_gainSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_bothproducts(x));
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< int >::type T(TSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type wt(wtSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type D(DSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type b(bSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type sig_i(sig_iSEXP);
+    Rcpp::traits::input_parameter< double >::type pen_gain(pen_gainSEXP);
+    rcpp_result_gen = Rcpp::wrap(gsc_target_grad(N, T, wt, Y, D, b, sig_i, pen_gain));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gsc_target_grad_b
+arma::vec gsc_target_grad_b(int N, int T, arma::mat wt, arma::mat Y, arma::cube D, arma::vec b, arma::vec sig_i);
+RcppExport SEXP _pgsc_gsc_target_grad_b(SEXP NSEXP, SEXP TSEXP, SEXP wtSEXP, SEXP YSEXP, SEXP DSEXP, SEXP bSEXP, SEXP sig_iSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< int >::type T(TSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type wt(wtSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type D(DSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type b(bSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type sig_i(sig_iSEXP);
+    rcpp_result_gen = Rcpp::wrap(gsc_target_grad_b(N, T, wt, Y, D, b, sig_i));
+    return rcpp_result_gen;
+END_RCPP
+}
+// gsc_target_i
+arma::vec gsc_target_i(int N, int T, arma::mat wt, arma::mat Y, arma::cube D, arma::mat b);
+RcppExport SEXP _pgsc_gsc_target_i(SEXP NSEXP, SEXP TSEXP, SEXP wtSEXP, SEXP YSEXP, SEXP DSEXP, SEXP bSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type N(NSEXP);
+    Rcpp::traits::input_parameter< int >::type T(TSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type wt(wtSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type D(DSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type b(bSEXP);
+    rcpp_result_gen = Rcpp::wrap(gsc_target_i(N, T, wt, Y, D, b));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_pgsc_rcpparma_hello_world", (DL_FUNC) &_pgsc_rcpparma_hello_world, 0},
-    {"_pgsc_rcpparma_outerproduct", (DL_FUNC) &_pgsc_rcpparma_outerproduct, 1},
-    {"_pgsc_rcpparma_innerproduct", (DL_FUNC) &_pgsc_rcpparma_innerproduct, 1},
-    {"_pgsc_rcpparma_bothproducts", (DL_FUNC) &_pgsc_rcpparma_bothproducts, 1},
+    {"_pgsc_W_extract", (DL_FUNC) &_pgsc_W_extract, 2},
+    {"_pgsc_gsc_target", (DL_FUNC) &_pgsc_gsc_target, 10},
+    {"_pgsc_gsc_target_grad_num", (DL_FUNC) &_pgsc_gsc_target_grad_num, 9},
+    {"_pgsc_gsc_target_grad", (DL_FUNC) &_pgsc_gsc_target_grad, 8},
+    {"_pgsc_gsc_target_grad_b", (DL_FUNC) &_pgsc_gsc_target_grad_b, 7},
+    {"_pgsc_gsc_target_i", (DL_FUNC) &_pgsc_gsc_target_i, 6},
     {NULL, NULL, 0}
 };
 
