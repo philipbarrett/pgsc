@@ -36,8 +36,8 @@ We generate such a data set as follows:
 
 library(pgsc)
 
-### Parameters ###
-NN <- 20                    # Number of units
+### Parameters
+NN <- 10                    # Number of units
 TT <- 100                   # Number of periods
 MM <- 2                     # Number of treatments
 RR <- 3                     # Number of covariates
@@ -60,7 +60,7 @@ tfes <- matrix( rnorm(TT * QQ, 0, sig.t ), TT, QQ )  # Time fixed effects
 X <- array( rnorm(NN*RR*TT), c( NN, RR, TT ))        # Covariates
 D <- array(NA, dim=c( NN, MM, TT ))
 D[] <- apply(X, 3, function(x) x%*%p) 
-D <- D + array( rnorm(NN*MM*TT), c( NN, MM, TT ))               # Treatments, correlated with X
+D <- D + array( rnorm(NN*MM*TT), c( NN, MM, TT ))               # Treatments, correl. w/ X
 Y <- sapply( 1:TT, function(i) D[,,i] %*% b + X[,,i] %*% r ) +  # Treatment & covariates
   fes[,1] + rep(1,NN) %*% t(tfes[,1]) +                         # FEs and TFE
   fes %*% sq %*% t(tfes) +                                      # Time-unit interaction
@@ -76,9 +76,10 @@ The parameter $b$ that we wish to recover has value $(1,2)'$.
 
 # Panel regression
 
-The panel regression fails to recover the correct value of $b$ due to the correlation of $X_{it}$ with $D_{it}$:
+The panel regression fails to recover the correct value of $b$ due to the correlation of $X_{it}$ with $D_{it}$.
 
 ```{r}
+
 ### Panel regression
 library(plm)
 pan <- plm( y ~ D1 + D2 + X1 + X2 + X3, dta, effect = 'twoways', index = c('n','t'))
@@ -109,7 +110,8 @@ The function `gsc.wrapper` computes a number of variants of the GSC estimator us
 library(nloptr)
 wt.init <- matrix( 1 / (NN-1), NN, NN-2 )
 b.init <- pan$coefficients[c('D1','D2')]
-sol.it <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init, method='onestep')
+sol.it <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init, 
+                      method='onestep')
 summary(sol.it)
 ```
 
@@ -118,14 +120,36 @@ While the resulting estimates are superior to the fixed effects panel estimates,
 ```{r}
 
 ### Compute point estimates from the two-step estimators
-sol.2.step.aggte <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = sol.it$b, method='twostep.aggte')
-sol.2.step.indiv <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = sol.2.step.aggte$b, method='twostep.indiv')
-sol.compare <- rbind( pan$coefficients[c('D1','D2')], sol.it$b, sol.2.step.aggte$b, sol.2.step.indiv$b, b )
-rownames(sol.compare) <- c( 'Panel FEs', 'GSC onestep', 'Aggte two-step GSC', 'Indiv two-step GSC', 'Truth')
+sol.2.step.aggte <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), 
+                                b.init = sol.it$b, method='twostep.aggte', 
+                                print.level=-1)
+sol.2.step.indiv <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), 
+                                b.init = sol.2.step.aggte$b, method='twostep.indiv', 
+                                print.level=-2)
+sol.compare <- rbind( pan$coefficients[c('D1','D2')], sol.it$b, sol.2.step.aggte$b, 
+                      sol.2.step.indiv$b, b )
+rownames(sol.compare) <- c( 'Panel FEs', 'GSC onestep', 'Aggte two-step GSC', 
+                            'Indiv two-step GSC', 'Truth')
 print(sol.compare)
 ```
 
 # The generalized synthetic control estimator: Hypothesis testing
+
+The package also includes two methods for hypothesis tsting, both based on some sort of bootstrap.  The first, a na\"ive bootstrap, simply resamples the units.  This captures the sampling uncertainty due to the units, but fixes the ata conditional on the unit.  The obvious difficulty with bootstrapping in this manner is that it is highly likely that two (or more) identical units will be selected, yielding an identical counterfactual for those units for any treatment coefficient $b$.  The function `gsc.bootstrap` accounts for this by dropping exact duplicates and increasing their weights in the weighted objective function to reflect their multiplicity.  The output is a distribution of estimates for $b$ and $W$.
+
+```{r}
+boot <- gsc.bootstrap(dta, 'y', c('D1','D2'), sol.2.step.aggte$b, 
+                      sol.2.step.aggte$wt, 'twostep.aggte', reps=250, 
+                      print.level=0 )
+print( apply( boot$bootstrap, 2, function(x) c( ave=mean(x), 
+                       quantile(x, c(.01, .025, .05, .5, .95, .975, .99)))) )
+plot( density( boot$bootstrap[,1] ), main='Boostrap parameter densities', 
+      xlab='', ylab='', xlim=range(boot$bootstrap), lwd=2 )
+lines( density( boot$bootstrap[,2] ), col='red', lty=2, lwd=2 )
+abline( v=b, col=c('black','red'), lty=1:2)
+```
+
+The second hypothesis test function 
 
 # Todos
 

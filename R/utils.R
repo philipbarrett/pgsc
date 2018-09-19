@@ -15,13 +15,16 @@ summary.gsc <- function(x){
   # print( x$W )
 }
 
-gsc.bootstrap <- function(Y, D, b.init, method, reps=100, seed=42, ... ){
+gsc.bootstrap <- function(dta, dep.var, indep.var, b.init, w.init=NULL, method, reps=100, seed=42, 
+                          print.level=1, ... ){
   # Bootstraps the estimation
   
   ## Set up ##
+  l.Y.D <- gsc.df.convert( dta, dep.var, indep.var )
+  Y <- l.Y.D$Y ; D <- l.Y.D$D
   NN <- dim(D)[1] ; MM <- dim(D)[2] ; TT <- dim(D)[3] 
   # Dimensions
-  wt.init <- matrix( 1 / (NN-1), NN, NN-2 )
+  if(!is.null(wt.init)) wt.init <- matrix( 1 / (NN-1), NN, NN-2 )
   # The initial weights
   b.out <- matrix( NA, nrow=reps, ncol=MM )
   # The output estimates
@@ -29,7 +32,7 @@ gsc.bootstrap <- function(Y, D, b.init, method, reps=100, seed=42, ... ){
   # Set the seed for randomization
   
   ## Select solution method ##
-  message('*** Naive full-sample esimtation ***')
+  if(print.level>0) message('*** Naive full-sample esimtation ***')
   sol.it <- gsc.iter(wt.init, Y, D, b.init, print.level=0, ... )
   # This computes the optimal W & b by iteratively solving for W conditional
   # on b and b conditional on W.  We need this for all estimation procedures.
@@ -38,13 +41,13 @@ gsc.bootstrap <- function(Y, D, b.init, method, reps=100, seed=42, ... ){
     # The point estimate
     sig.i <- rep(1,NN)
   }else if( method=='twostep.aggte' ){
-    message('*** Computing point estimate ***')
+    if(print.level>0) message('*** Computing point estimate ***')
     sig.i <- gsc_target_i( NN, TT, sol.it$wt, Y, D, matrix( sol.it$b, MM, NN ) )
     # The province-level fitted errors from the initial estimation
     pt.est <- gsc.iter( wt.init, Y, D, sol.it$b, sig.i, ... )
     # The two-step estimator using residual weights generated from an unweighted solution
   }else if( method=='twostep.indiv' ){
-    message('*** Computing point estimate ***')
+    if(print.level>0) message('*** Computing point estimate ***')
     sol.i <- gsc.iter.i( wt.init, Y, D, sol.it$b, ... )
     # Now fit each unit alone
     sig.i <- gsc_target_i( NN, TT, sol.i$wt, Y, D, t( sol.i$b ) )
@@ -55,11 +58,11 @@ gsc.bootstrap <- function(Y, D, b.init, method, reps=100, seed=42, ... ){
   
   ## Do the bootstrap ##
   for( boot.i in 1:reps ){
-    message('Bootstrap iteration ', boot.i )
+    if(print.level>0) message('Bootstrap iteration ', boot.i )
     this.sample <- sample( 1:NN, NN, replace=TRUE )
     this.sample.unique <- sort(unique(this.sample))
     this.sig.mult <- c(table(this.sample))
-    # Bootstrap by 1) drawing a random sample of provinces, 2) selecting
+    # Bootstrap by 1) drawing a random sample of units, 2) selecting
     # only the unique ones (to avoid trivial matching) and 3) weighting
     # the objective function to reflect the excluded provinces.
     this.Y <- Y[ this.sample.unique, ]
@@ -70,7 +73,8 @@ gsc.bootstrap <- function(Y, D, b.init, method, reps=100, seed=42, ... ){
     # The resampled data
     this.est <- gsc.iter(this.wt.init, this.Y, this.D, pt.est$b, print.level=-1, 
                          sig.i = this.sig.mult * this.sig.i, ... )
-    message('  estimation result: iter=', this.est$it, ', diff=', signif(this.est$diff,3), 
+    if(print.level>0) 
+      message('  estimation result: iter=', this.est$it, ', diff=', signif(this.est$diff,3), 
             ', err=', signif(this.est$err,3) )
     b.out[boot.i,] <- this.est$b
   }

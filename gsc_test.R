@@ -109,7 +109,7 @@ sol.it <- gsc.iter(wt.init, Y, D, b)
 ### Compute direct optimization ###
 ub <- c( rep(1,NN*(NN-2)), rep(Inf,MM) )
 lb <- c( rep(0,NN*(NN-2)), -rep(Inf,MM) )
-opts <- list( algorithm = "NLOPT_LD_SLSQP", maxeval=100, print_level=1 ) #, 
+opts <- list( algorithm = "NLOPT_LD_SLSQP", maxeval=1000, print_level=0 ) #, 
 # check_derivatives = TRUE ) #, check_derivatives_print = "all" )
 x0 <- c(sol.it$wt,sol.it$b) 
 # x0 <- c(wt.init, b ) 

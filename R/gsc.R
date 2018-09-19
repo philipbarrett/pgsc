@@ -145,9 +145,9 @@ gsc.wrapper <- function(dta, dep.var, indep.var, b.init, method, sol.it=NULL, wt
   
   if( method=='twostep.aggte'){
     sig.i <- gsc_target_i( NN, TT, sol.it$wt, Y, D, matrix( sol.it$b, MM, NN ) )
-    # The province-level fitted errors from the initial estimation
+        # The province-level fitted errors from the initial estimation
     sol.2.step <- gsc.iter( wt.init, Y, D, sol.it$b, sig.i, ... )
-    # The two-step estimator using residual weights generated from an unweighted solution
+        # The two-step estimator using residual weights generated from an unweighted solution
     return(sol.2.step)
   }
   
