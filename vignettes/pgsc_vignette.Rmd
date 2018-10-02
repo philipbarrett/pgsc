@@ -33,16 +33,17 @@ We generate such a data set as follows:
 
 
 ```{r}
-
-library(pgsc)
+rm(list=ls())
+library(pgsc) ; library(reshape2)
 
 ### Parameters
-NN <- 10                    # Number of units
-TT <- 100                   # Number of periods
+NN <- 15                    # Number of units
+TT <- 50                    # Number of periods
 MM <- 2                     # Number of treatments
 RR <- 3                     # Number of covariates
 SS <- 2                     # Number of unit FEs
 QQ <- 3                     # Number of time FEs
+set.seed(42)
 b <- c(1,2)                 # Treatment coefficients
 sq <- matrix( c( 1, .2, .3, -.9, -.1, .2 ), nrow=SS, ncol=QQ )
                             # Weighting matrix on time-varying factors
@@ -87,7 +88,7 @@ summary(pan)
 ```
 
 
-# The generalized synthetic control estimator: Point estimates
+# The generalized synthetic control estimator: point estimates
 
 The GSC estimator provides a vector of coefficients $\hat b$ and an estimated weighing matrix $W$ solving:
 
@@ -133,27 +134,67 @@ rownames(sol.compare) <- c( 'Panel FEs', 'GSC onestep', 'Aggte two-step GSC',
 print(sol.compare)
 ```
 
-# The generalized synthetic control estimator: Hypothesis testing
+# The generalized synthetic control estimator: hypothesis testing
 
-The package also includes two methods for hypothesis tsting, both based on some sort of bootstrap.  The first, a na\"ive bootstrap, simply resamples the units.  This captures the sampling uncertainty due to the units, but fixes the ata conditional on the unit.  The obvious difficulty with bootstrapping in this manner is that it is highly likely that two (or more) identical units will be selected, yielding an identical counterfactual for those units for any treatment coefficient $b$.  The function `gsc.bootstrap` accounts for this by dropping exact duplicates and increasing their weights in the weighted objective function to reflect their multiplicity.  The output is a distribution of estimates for $b$ and $W$.
+<!-- The first, a na\"{i}ve bootstrap, simply resamples the units.  This captures the sampling uncertainty due to the units, but fixes the ata conditional on the unit.  The obvious difficulty with bootstrapping in this manner is that it is highly likely that two (or more) identical units will be selected, yielding an identical counterfactual for those units for any treatment coefficient $b$.  The function `gsc.bootstrap` accounts for this by dropping exact duplicates and increasing their weights in the weighted objective function to reflect their multiplicity.  The output is a distribution of estimates for $b$ and $W$.  These (joint) distributions can be used to test hypotheses by checking the fraction of the bootstrapped sample which satisfies the hypothesis. -->
+
+<!-- ```{r} -->
+<!-- # boot <- gsc.bootstrap(dta, 'y', c('D1','D2'), sol.2.step.aggte$b,  -->
+<!-- #                       sol.2.step.aggte$wt, 'twostep.aggte', reps=250,  -->
+<!-- #                       print.level=0 ) -->
+<!-- # print( apply( boot$bootstrap, 2, function(x) c( ave=mean(x),  -->
+<!-- #                        quantile(x, c(.01, .025, .05, .5, .95, .975, .99)))) ) -->
+<!-- # plot( density( boot$bootstrap[,1] ), main='Boostrap parameter densities',  -->
+<!-- #       xlab='', ylab='', xlim=range(boot$bootstrap), lwd=2 ) -->
+<!-- # lines( density( boot$bootstrap[,2] ), col='red', lty=2, lwd=2 ) -->
+<!-- # abline( v=b, col=c('black','red'), lty=1:2) -->
+<!-- ``` -->
+
+The package also includes functions for hypothesis tsting, using the bootstrap method proposed in [@powell2017synthetic].  This approach requires re-estimating the model under the hypothesized restriction $g(\theta)=0$.  If the null hypothesis is true then the restrction does not bind, and the slope of the objective function should be zero when the constraint is enforced.  Bootstrapping only the final step of the calculation of the gradients of the objective function provides a quick way to approximate the distribution of the gradient, testing if the deviation from zero is statistically significant.
+
+We start by defining the restriction(s) to be tested.  Both the function and gradient are required.
 
 ```{r}
-boot <- gsc.bootstrap(dta, 'y', c('D1','D2'), sol.2.step.aggte$b, 
-                      sol.2.step.aggte$wt, 'twostep.aggte', reps=250, 
-                      print.level=0 )
-print( apply( boot$bootstrap, 2, function(x) c( ave=mean(x), 
-                       quantile(x, c(.01, .025, .05, .5, .95, .975, .99)))) )
-plot( density( boot$bootstrap[,1] ), main='Boostrap parameter densities', 
-      xlab='', ylab='', xlim=range(boot$bootstrap), lwd=2 )
-lines( density( boot$bootstrap[,2] ), col='red', lty=2, lwd=2 )
-abline( v=b, col=c('black','red'), lty=1:2)
+rest.val <- 1
+g <- function(b) b[1] / ( 1 - b[2] ) + rest.val ; g.grad <- function(b) c( 1 / ( 1 - b[2] ), b[1] / ( 1 - b[2] )^2 )
 ```
 
-The second hypothesis test function 
+Note that the current version of the package only allows for single equation reqtrictions to be tested.  Extending this is a point for further development.  In the meantime, multiple restrictions can be implemented as a sum of squares of individual restrictions.  To test the restriction, we first solve the restricted model, using the axuillary inputs `g.i` and , then test that $g(b)=0$.
+
+```{r include=FALSE}
+sol.2.step.rest <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init, 
+                      method='twostep.indiv', g.i=g, g.i.grad=g.grad )
+wald.test.g <- gsc.wald.wrapper( dta, dep.var = 'y', indep.var = c('D1','D2'), 
+                                 sol.rest = sol.2.step.rest, n.boot = 10000 )
+```
+
+The `wald.test.g` object has associated summary and plot methods
+
+```{r}
+summary(wald.test.g)
+plot(wald.test.g)
+```
+
+With a p-value of over 0.98, the hypothesis cannot be rejected at any reasonable significance level.  This is  relief, as it is false; when evaluated at the true value of $b=(1,2)$, $g(b)=0$.  We can check that a false hypothesis is rejected byt resolveing the under a false restriction:
+
+```{r include=FALSE}
+rest.val <- 2
+sol.2.step.rest.2 <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init, 
+                      method='twostep.indiv', g.i=g, g.i.grad=g.grad )
+wald.test.g.2 <- gsc.wald.wrapper( dta, dep.var = 'y', indep.var = c('D1','D2'), 
+                                 sol.rest = sol.2.step.rest.2, n.boot = 10000 )
+```
+
+The resulting p-value is close to 0.01.
+
+```{r}
+summary(wald.test.g.2)
+plot(wald.test.g.2)
+```
 
 # Todos
 
-Documentation for wrapper.  A plot function for a GSC object, esp weights.
+Documentation for wrapper and test function.  A plot function for a GSC object, esp weights.
 
 
 

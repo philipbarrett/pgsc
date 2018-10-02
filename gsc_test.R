@@ -1,11 +1,12 @@
 rm(list=ls())
 library(microbenchmark)
 library(plm)
-source('~/Dropbox/2017/research/AFG/conflict_revenue/code/gsc.R')
-Rcpp::sourceCpp('src/gsc.cpp')
+library(pgsc)
+# source('~/Dropbox/2017/research/AFG/conflict_revenue/code/gsc.R')
+# Rcpp::sourceCpp('src/gsc.cpp')
 
-NN <- 34 # 35       # Number of units
-TT <- 150           # Number of periods
+NN <- 15 # 34            # Number of units
+TT <- 50 # 150           # Number of periods
 MM <- 2             # Number of treatments
 RR <- 3             # Number of covariates
 SS <- 2             # Number of unit FEs
@@ -152,27 +153,34 @@ for( i in 1:NN ) lines( 1:NN, sol.2.step$W[i,], col=i)
 abline(h=0)
 
 ### Testing ###
-rest.val <- .85
+rest.val <- 1 # .975  # 1 # 1.1 # .95
 g.1 <- function(b) b[1] - rest.val ; g.1.grad <- function(b) c(1,0)
-sol.2.step.const <- gsc.iter( wt.init, Y, D, c(rest.val,b[2]), sig.i, g.i=g.1, g.i.grad=g.1.grad )
-# The restricted solution
-h.grad.1 <- gsc.grad.cl( sol.2.step.const$wt, Y, D, sol.2.step.const$b, 1, sig.i)
-# The gradients of the objective function
-mu.1 <- gsc.mu(h.grad.1)
-s.i.1 <- gsc.s.i(h.grad.1)
-S.1 <- gsc.wald(s.i.1)
-v.S.1 <- gsc.wald.boot( s.i.1, 100000 )
+sol.2.step.const <- #gsc.iter( wt.init, Y, D, c(rest.val,b[2]), sig.i, g.i=g.1, g.i.grad=g.1.grad )
+# sol.2.step.const.b <- 
+  gsc.wrapper( dta, dep.var = 'y', indep.var = c('D1','D2'), 
+                                   method = 'twostep.indiv', b.init=c(1,2), g.i=g.1, g.i.grad=g.1.grad )
+    # The restricted solution
+h.grad.1 <- gsc.grad.cl.k( sol.2.step.const$W, Y, D, sol.2.step.const$b, 1, sig.i)
+h.grad <- gsc.grad.cl( sol.2.step.const$W, Y, D, sol.2.step.const$b, sig.i)
+    # The gradients of the objective function
+mu.1 <- gsc.mu.k(h.grad.1)
+mu <- gsc.mu(h.grad)
+s.i <- gsc.s.i(h.grad)
+S.1 <- gsc.wald(s.i)
+v.S.1 <- gsc.wald.boot( s.i, 10000 )
 print(mean( v.S.1 > S.1 ))
+wald.test.g <- gsc.wald.wrapper( dta, dep.var = 'y', indep.var = c('D1','D2'), 
+                                 sol.rest = sol.2.step.const, n.boot = 10000 )
+print(wald.test.g$p.val)
 
 g.2 <- function(b) b[1] / ( 1 - b[2] ) + 1 ; g.2.grad <- function(b) c( 1 / ( 1 - b[2] ), b[1] / ( 1 - b[2] )^2 )
 sol.2.step.const.2 <- gsc.iter( wt.init, Y, D, b, sig.i, g.i=g.2, g.i.grad=g.2.grad )
 # The restricted solution
-h.grad.2 <- gsc.grad.cl( sol.2.step.const.2$wt, Y, D, sol.2.step.const.2$b, 1, sig.i)
+h.grad.2 <- gsc.grad.cl( sol.2.step.const.2$W, Y, D, sol.2.step.const.2$b, sig.i)
 # The gradients of the objective function
-mu.2 <- gsc.mu(h.grad.2)
 s.i.2 <- gsc.s.i(h.grad.2)
 S.2 <- gsc.wald(s.i.2)
-v.S.2 <- gsc.wald.boot( s.i.2, 100000 )
+v.S.2 <- gsc.wald.boot( s.i.2, 10000 )
 print(mean( v.S.2 > S.2 ))
 
 

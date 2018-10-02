@@ -15,70 +15,20 @@ summary.gsc <- function(x){
   # print( x$W )
 }
 
-gsc.bootstrap <- function(dta, dep.var, indep.var, b.init, w.init=NULL, method, reps=100, seed=42, 
-                          print.level=1, ... ){
-  # Bootstraps the estimation
-  
-  ## Set up ##
-  l.Y.D <- gsc.df.convert( dta, dep.var, indep.var )
-  Y <- l.Y.D$Y ; D <- l.Y.D$D
-  NN <- dim(D)[1] ; MM <- dim(D)[2] ; TT <- dim(D)[3] 
-  # Dimensions
-  if(!is.null(wt.init)) wt.init <- matrix( 1 / (NN-1), NN, NN-2 )
-  # The initial weights
-  b.out <- matrix( NA, nrow=reps, ncol=MM )
-  # The output estimates
-  set.seed(seed)
-  # Set the seed for randomization
-  
-  ## Select solution method ##
-  if(print.level>0) message('*** Naive full-sample esimtation ***')
-  sol.it <- gsc.iter(wt.init, Y, D, b.init, print.level=0, ... )
-  # This computes the optimal W & b by iteratively solving for W conditional
-  # on b and b conditional on W.  We need this for all estimation procedures.
-  if( method=='onestep' ){
-    pt.est <- sol.it
-    # The point estimate
-    sig.i <- rep(1,NN)
-  }else if( method=='twostep.aggte' ){
-    if(print.level>0) message('*** Computing point estimate ***')
-    sig.i <- gsc_target_i( NN, TT, sol.it$wt, Y, D, matrix( sol.it$b, MM, NN ) )
-    # The province-level fitted errors from the initial estimation
-    pt.est <- gsc.iter( wt.init, Y, D, sol.it$b, sig.i, ... )
-    # The two-step estimator using residual weights generated from an unweighted solution
-  }else if( method=='twostep.indiv' ){
-    if(print.level>0) message('*** Computing point estimate ***')
-    sol.i <- gsc.iter.i( wt.init, Y, D, sol.it$b, ... )
-    # Now fit each unit alone
-    sig.i <- gsc_target_i( NN, TT, sol.i$wt, Y, D, t( sol.i$b ) )
-    # The fit from the separate, province-level estimation
-    pt.est <- gsc.iter( wt.init, Y, D, sol.it$b, sig.i, ... )
-    # The two-step estimator using residual weights generated from an unweighted solution
-  }
-  
-  ## Do the bootstrap ##
-  for( boot.i in 1:reps ){
-    if(print.level>0) message('Bootstrap iteration ', boot.i )
-    this.sample <- sample( 1:NN, NN, replace=TRUE )
-    this.sample.unique <- sort(unique(this.sample))
-    this.sig.mult <- c(table(this.sample))
-    # Bootstrap by 1) drawing a random sample of units, 2) selecting
-    # only the unique ones (to avoid trivial matching) and 3) weighting
-    # the objective function to reflect the excluded provinces.
-    this.Y <- Y[ this.sample.unique, ]
-    this.NN <- nrow(this.Y)
-    this.D <- array( D[ this.sample.unique, , ], dim=c( this.NN, MM, TT ) )
-    this.wt.init <- matrix( 1 / (this.NN-1), this.NN, this.NN-2 )
-    this.sig.i <- sig.i[this.sample.unique]
-    # The resampled data
-    this.est <- gsc.iter(this.wt.init, this.Y, this.D, pt.est$b, print.level=-1, 
-                         sig.i = this.sig.mult * this.sig.i, ... )
-    if(print.level>0) 
-      message('  estimation result: iter=', this.est$it, ', diff=', signif(this.est$diff,3), 
-            ', err=', signif(this.est$err,3) )
-    b.out[boot.i,] <- this.est$b
-  }
-  return(list(pt=pt.est, bootstrap=b.out))
+summary.gsc.wald <- function(x){
+  cat( 'Non-linear Wald test of restricted hypothesis, using', length(x$S.boot), 'bootstrapped samples \n \n' )
+  cat( 'Restricted coefficients:\n' )
+  print( x$b )
+  cat( '\nWald statistic = ', x$S )
+  cat( '\np-value = ', x$p.val, '\n' )
+}
+
+plot.gsc.wald <- function(x){
+  plot( density( x$S.boot ), main='Boostrap Wald test densities',
+        xlab='', ylab='', xlim=range(x$S.boot), lwd=2 )
+  abline( v=x$S, col='red', lty=2, lwd=2 )
+  legend('topright', c('Boostrapped Wald density', 'Sample Wald statistic'), 
+         lwd=2, lty=1:2, col=c('black','red'), bty='n')
 }
 
 gsc.reg <- function( ols.coeff, dta, start='2005-03-01', stop='2016-12-31', indep.idx=1, dep.idx=NULL, 
@@ -124,3 +74,69 @@ gsc.reg <- function( ols.coeff, dta, start='2005-03-01', stop='2016-12-31', inde
   return( list( sol.compare=sol.compare, b.init=b.init, sol.it=sol.it, 
                 sol.2.step.agg=sol.2.step.agg, sol.2.step.indiv=sol.2.step.indiv ) )
 }
+
+# gsc.bootstrap <- function(dta, dep.var, indep.var, b.init, w.init=NULL, method, reps=100, seed=42, 
+#                           print.level=1, ... ){
+#   # Bootstraps the estimation
+#   
+#   ## Set up ##
+#   l.Y.D <- gsc.df.convert( dta, dep.var, indep.var )
+#   Y <- l.Y.D$Y ; D <- l.Y.D$D
+#   NN <- dim(D)[1] ; MM <- dim(D)[2] ; TT <- dim(D)[3] 
+#   # Dimensions
+#   if(!is.null(wt.init)) wt.init <- matrix( 1 / (NN-1), NN, NN-2 )
+#   # The initial weights
+#   b.out <- matrix( NA, nrow=reps, ncol=MM )
+#   # The output estimates
+#   set.seed(seed)
+#   # Set the seed for randomization
+#   
+#   ## Select solution method ##
+#   if(print.level>0) message('*** Naive full-sample esimtation ***')
+#   sol.it <- gsc.iter(wt.init, Y, D, b.init, print.level=0, ... )
+#   # This computes the optimal W & b by iteratively solving for W conditional
+#   # on b and b conditional on W.  We need this for all estimation procedures.
+#   if( method=='onestep' ){
+#     pt.est <- sol.it
+#     # The point estimate
+#     sig.i <- rep(1,NN)
+#   }else if( method=='twostep.aggte' ){
+#     if(print.level>0) message('*** Computing point estimate ***')
+#     sig.i <- gsc_target_i( NN, TT, sol.it$wt, Y, D, matrix( sol.it$b, MM, NN ) )
+#     # The province-level fitted errors from the initial estimation
+#     pt.est <- gsc.iter( wt.init, Y, D, sol.it$b, sig.i, ... )
+#     # The two-step estimator using residual weights generated from an unweighted solution
+#   }else if( method=='twostep.indiv' ){
+#     if(print.level>0) message('*** Computing point estimate ***')
+#     sol.i <- gsc.iter.i( wt.init, Y, D, sol.it$b, ... )
+#     # Now fit each unit alone
+#     sig.i <- gsc_target_i( NN, TT, sol.i$wt, Y, D, t( sol.i$b ) )
+#     # The fit from the separate, province-level estimation
+#     pt.est <- gsc.iter( wt.init, Y, D, sol.it$b, sig.i, ... )
+#     # The two-step estimator using residual weights generated from an unweighted solution
+#   }
+#   
+#   ## Do the bootstrap ##
+#   for( boot.i in 1:reps ){
+#     if(print.level>0) message('Bootstrap iteration ', boot.i )
+#     this.sample <- sample( 1:NN, NN, replace=TRUE )
+#     this.sample.unique <- sort(unique(this.sample))
+#     this.sig.mult <- c(table(this.sample))
+#     # Bootstrap by 1) drawing a random sample of units, 2) selecting
+#     # only the unique ones (to avoid trivial matching) and 3) weighting
+#     # the objective function to reflect the excluded provinces.
+#     this.Y <- Y[ this.sample.unique, ]
+#     this.NN <- nrow(this.Y)
+#     this.D <- array( D[ this.sample.unique, , ], dim=c( this.NN, MM, TT ) )
+#     this.wt.init <- matrix( 1 / (this.NN-1), this.NN, this.NN-2 )
+#     this.sig.i <- sig.i[this.sample.unique]
+#     # The resampled data
+#     this.est <- gsc.iter(this.wt.init, this.Y, this.D, pt.est$b, print.level=-1, 
+#                          sig.i = this.sig.mult * this.sig.i, ... )
+#     if(print.level>0) 
+#       message('  estimation result: iter=', this.est$it, ', diff=', signif(this.est$diff,3), 
+#             ', err=', signif(this.est$err,3) )
+#     b.out[boot.i,] <- this.est$b
+#   }
+#   return(list(pt=pt.est, bootstrap=b.out))
+# }

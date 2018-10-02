@@ -126,7 +126,21 @@ gsc.df.convert <- function( dta, dep.var='y', indep.var=c('D1','D2') ){
 }
 
 
-gsc.wrapper <- function(dta, dep.var, indep.var, b.init, method, sol.it=NULL, wt.init=NULL, ... ){
+gsc.wrapper <- function(dta, dep.var, indep.var, b.init, method, sol.it=NULL, wt.init=NULL, 
+                        print.level=0, g.i=NULL, g.i.grad=NULL, ... ){
+# Wrapper function for GSC estimation
+#
+# @param dta A data frame
+# @param dep.var A string defining the dependent variable
+# @param indep.var A vector of strings defining the independent (treatement) variables
+# @param b.init An initial value for the treatment variable coefficients. Must have same 
+#           length as `indep.var`
+# @param method The GSC iteration method to be used. See \link{Details} for further details
+# @params sol.it The first step solution used in the two-step methods. If omitted, 
+#           a new one-step solution is computed.
+# 
+# @details
+  
   # GSC wrapper for point estimates
   l.Y.D <- gsc.df.convert( dta, dep.var, indep.var )
   Y <- l.Y.D$Y ; D <- l.Y.D$D
@@ -136,7 +150,8 @@ gsc.wrapper <- function(dta, dep.var, indep.var, b.init, method, sol.it=NULL, wt
   # The initial weights
   
   if( method=='onestep' | is.null(sol.it) )
-    sol.it <- gsc.iter(wt.init, Y, D, b.init, ... )
+    sol.it <- gsc.iter(wt.init, Y, D, b.init, print.level=print.level, 
+                       g.i=g.i, g.i.grad=g.i.grad, ... )
   # This computes the optimal W & b by iteratively solving for W conditional
   # on b and b conditional on W.
   if( method=='onestep' ){
@@ -146,17 +161,19 @@ gsc.wrapper <- function(dta, dep.var, indep.var, b.init, method, sol.it=NULL, wt
   if( method=='twostep.aggte'){
     sig.i <- gsc_target_i( NN, TT, sol.it$wt, Y, D, matrix( sol.it$b, MM, NN ) )
         # The province-level fitted errors from the initial estimation
-    sol.2.step <- gsc.iter( wt.init, Y, D, sol.it$b, sig.i, ... )
+    sol.2.step <- gsc.iter( wt.init, Y, D, sol.it$b, sig.i, print.level=print.level, 
+                            g.i=g.i, g.i.grad=g.i.grad, ... )
         # The two-step estimator using residual weights generated from an unweighted solution
     return(sol.2.step)
   }
   
   if( method=='twostep.indiv' ){
-    sol.i <- gsc.iter.i( wt.init, Y, D, sol.it$b )
+    sol.i <- gsc.iter.i( wt.init, Y, D, sol.it$b, print.level=print.level )
     # Now fit each unit alone
     sig.i <- gsc_target_i( NN, TT, sol.i$wt, Y, D, t( sol.i$b ) )
     # The fit from the separate, province-level estimation
-    sol.2.step <- gsc.iter( wt.init, Y, D, sol.it$b, sig.i, ... )
+    sol.2.step <- gsc.iter( wt.init, Y, D, sol.it$b, sig.i, print.level=print.level, 
+                            g.i=g.i, g.i.grad=g.i.grad, ... )
     # The two-step estimator using the 
     return(sol.2.step)
   }
