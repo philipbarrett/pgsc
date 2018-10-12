@@ -11,8 +11,16 @@ summary.gsc <- function(x){
   print( x$b )
   cat( '\nMax optimization error = ', x$err )
   cat( '\nMax iteration difference = ', x$diff, '\n' )
-  # cat( '\nUnit weights:\n' )
-  # print( x$W )
+}
+
+plot.gsc <- function(x){
+  if(!is.null(x$sig.i)){
+    st.names <- if(any(names(x$W)!='' )) names(x$W) else 1:length(x$sig.i)
+    barplot( 1/x$sig.i, beside = TRUE, names.arg = st.names, 
+             main='Unit-specific weights from first stage', col = 'blue' )
+  }
+  image(1-t(sol.2.step.indiv$W), col=gray(seq(0,1,length.out=11)) )
+      # This needs rotation and 
 }
 
 summary.gsc.wald <- function(x){
