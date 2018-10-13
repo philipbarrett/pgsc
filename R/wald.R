@@ -88,7 +88,32 @@ gsc.wald.boot <- function( s.i, n.it=1000, seed=42 ){
 }
 
 gsc.wald.wrapper <- function( dta, dep.var, indep.var, sol.rest, n.boot=10000, seed=42 ){
-# A wrapper for the wald test of a restricted solution
+#' A wrapper for the wald test of a restricted solution
+#' 
+#' @param dta A dataframe
+#' @param dep.var A vector of strings of names of dependent variables.
+#' @param indep.var A vector of strings of names of independent (treatment) variables.
+#' @param sol.rest A restricted solution which is being tested
+#' @param n.boot The number of bootstrapped samples for the variance calculation. Default is 10000.
+#' @param seed Randomization seed.  Default is 42.
+#' 
+#' @return Returns the wald test as \code{gsc.wald} object, a list with entries:
+#' \describe{
+#'     \item{b}{The point estimate of the coefficients on the dependent variables}
+#'     \item{S}{The Wald statistic}
+#'     \item{s.boot}{The booststrapped Wald statistic}
+#'     \item{p.value}{The p-value for the Wald statistic.}
+#' }
+#' @details See the vignette "Using \code{pgsc}" for an extended example.
+#' @examples
+#' data("pgsc.dta")
+#' g.i <- function(b) b[1] ; g.i.grad <- function(b) c(1,0)
+#' sol.r <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), 
+#' b.init = c(0,1), method='onestep', g.i=g.i, g.i.grad=g.i.grad )
+#' wald <- gsc.wald.wrapper( pgsc.dta, 'y', indep.var = c('D1','D2'), sol.r )
+#' summary(wald)
+#' plot(wald)
+  
   l.Y.D <- gsc.df.convert( dta, dep.var, indep.var )
   Y <- l.Y.D$Y ; D <- l.Y.D$D
   h.grad <- gsc.grad.cl( sol.rest$W, Y, D, sol.rest$b, sol.rest$sig.i)

@@ -33,8 +33,8 @@ We generate such a data set as follows:
 
 
 ```{r}
-rm(list=ls())
-library(pgsc) ; library(reshape2)
+rm(list=ls()) ; set.seed(42)
+library(pgsc)
 
 ### Parameters
 NN <- 15                    # Number of units
@@ -66,24 +66,24 @@ Y <- sapply( 1:TT, function(i) D[,,i] %*% b + X[,,i] %*% r ) +  # Treatment & co
   fes[,1] + rep(1,NN) %*% t(tfes[,1]) +                         # FEs and TFE
   fes %*% sq %*% t(tfes) +                                      # Time-unit interaction
   rnorm( NN*TT, 0, sig )                                        # Noise
-dta <- data.frame( n=state.abb[1:NN], t=rep(1:TT,each=NN), y=c(Y),
+pgsc.dta <- data.frame( n=state.abb[1:NN], t=rep(1:TT,each=NN), y=c(Y),
                    do.call(rbind,lapply(1:TT,function(i)D[,,i])),
                    do.call(rbind,lapply(1:TT,function(i)X[,,i])) )
-names(dta) <- c('n','t','y', paste0('D',1:MM), paste0('X',1:RR) )
+names(pgsc.dta) <- c('n','t','y', paste0('D',1:MM), paste0('X',1:RR) )
     # Bind into a data frame
 ```
 
-The parameter $b$ that we wish to recover has value $(1,2)'$.
+This dataset is also stored in the package and can be loaded using `data("pgsc.dta")`.  Note that the parameter $b$ that we wish to recover has value $(1,2)'$.
 
 # Panel regression
 
-The panel regression fails to recover the correct value of $b$ due to the correlation of $X_{it}$ with $D_{it}$.  Instead, it provides point estimates for $b$ close to $(0.3,0.3)$ and with neither coefficient statistically significant.
+The panel regression fails to recover the correct value of $b$ due to the correlation of $X_{it}$ with $D_{it}$.
 
 ```{r}
 
 ### Panel regression
 library(plm)
-pan <- plm( y ~ D1 + D2 + X1 + X2 + X3, dta, effect = 'twoways', index = c('n','t'))
+pan <- plm( y ~ D1 + D2 + X1 + X2 + X3, pgsc.dta, effect = 'twoways', index = c('n','t'))
 summary(pan)
 ```
 
@@ -99,7 +99,7 @@ $$
 \end{aligned}
 $$
 
-In other words, the GSC estimator minimizes the squared difference in outcomes unexplained by the treatment variable (i.e. the omitted variables), between each unit and a unit-specific counterfactual.  The counterfactual itself is a weighted average of the other units.
+In other words, the GSC estimator minimizes the squared difference in outcomes unexplained by the treatment variable between each unit and a unit-specific counterfactual.  The counterfactual itself is a weighted average of the other units, (i.e. the impact of the omitted variables).
 
 The function `gsc.wrapper` computes a number of variants of the GSC estimator using an iterative approach.  It works by optimizing over the coefficients $b$ and the weights $W$ each in turn, iterating until the maximum difference in iterations is suitably close to zero.[^1]
 
@@ -111,7 +111,7 @@ The function `gsc.wrapper` computes a number of variants of the GSC estimator us
 library(nloptr)
 wt.init <- matrix( 1 / (NN-1), NN, NN-2 )
 b.init <- pan$coefficients[c('D1','D2')]
-sol.it <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init,
+sol.it <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init,
                       method='onestep')
 summary(sol.it)
 ```
@@ -121,10 +121,10 @@ While the resulting estimates are superior to the fixed effects panel estimates,
 ```{r}
 
 ### Compute point estimates from the two-step estimators
-sol.2.step.aggte <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'),
+sol.2.step.aggte <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'),
                                 b.init = sol.it$b, method='twostep.aggte',
                                 print.level=-1)
-sol.2.step.indiv <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'),
+sol.2.step.indiv <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'),
                                 b.init = sol.2.step.aggte$b, method='twostep.indiv',
                                 print.level=-2)
 sol.compare <- rbind( pan$coefficients[c('D1','D2')], sol.it$b, sol.2.step.aggte$b,
@@ -134,37 +134,31 @@ rownames(sol.compare) <- c( 'Panel FEs', 'GSC onestep', 'Aggte two-step GSC',
 print(sol.compare)
 ```
 
+Note that the GSC estimates are much closer than the panel regression estimates to the truth, particularly when weighted.
+
 # The generalized synthetic control estimator: hypothesis testing
 
-<!-- The first, a na\"{i}ve bootstrap, simply resamples the units.  This captures the sampling uncertainty due to the units, but fixes the ata conditional on the unit.  The obvious difficulty with bootstrapping in this manner is that it is highly likely that two (or more) identical units will be selected, yielding an identical counterfactual for those units for any treatment coefficient $b$.  The function `gsc.bootstrap` accounts for this by dropping exact duplicates and increasing their weights in the weighted objective function to reflect their multiplicity.  The output is a distribution of estimates for $b$ and $W$.  These (joint) distributions can be used to test hypotheses by checking the fraction of the bootstrapped sample which satisfies the hypothesis. -->
+The package also includes functions for hypothesis testing, using the bootstrap method proposed in [@powell2017synthetic].  This approach requires re-estimating the model under the hypothesized restriction $g(\theta)=0$.  If the null hypothesis is true, then the restriction does not bind.  And so the slope of the objective function should be zero when the constraint is enforced.  After computing the appropriate derivative under the restriction, one can approximate its variance under the null by bootstrap using a symmetry assumption.  This provides a quick way to approximate the distribution of the gradient without having to re-solve the constrained problem, which may be time-consuming.
 
-<!-- ```{r} -->
-<!-- # boot <- gsc.bootstrap(dta, 'y', c('D1','D2'), sol.2.step.aggte$b,  -->
-<!-- #                       sol.2.step.aggte$wt, 'twostep.aggte', reps=250,  -->
-<!-- #                       print.level=0 ) -->
-<!-- # print( apply( boot$bootstrap, 2, function(x) c( ave=mean(x),  -->
-<!-- #                        quantile(x, c(.01, .025, .05, .5, .95, .975, .99)))) ) -->
-<!-- # plot( density( boot$bootstrap[,1] ), main='Boostrap parameter densities',  -->
-<!-- #       xlab='', ylab='', xlim=range(boot$bootstrap), lwd=2 ) -->
-<!-- # lines( density( boot$bootstrap[,2] ), col='red', lty=2, lwd=2 ) -->
-<!-- # abline( v=b, col=c('black','red'), lty=1:2) -->
-<!-- ``` -->
+We start by defining the restriction(s) to be tested.  We test the restriction:
 
-The package also includes functions for hypothesis testing, using the bootstrap method proposed in [@powell2017synthetic].  This approach requires re-estimating the model under the hypothesized restriction $g(\theta)=0$.  If the null hypothesis is true then the restriction does not bind, and the slope of the objective function should be zero when the constraint is enforced.  Bootstrapping only the final step of the calculation of the gradients of the objective function provides a quick way to approximate the distribution of the gradient, testing if the deviation from zero is statistically significant.
-
-We start by defining the restriction(s) to be tested.  Both the function and gradient are required.
+$$ \frac{b_1}{1-b_2} = A $$
+This is true when $A=-1$.  Both the function and gradient are required, which we define as follows:
 
 ```{r}
-rest.val <- 1
-g <- function(b) b[1] / ( 1 - b[2] ) + rest.val ; g.grad <- function(b) c( 1 / ( 1 - b[2] ), b[1] / ( 1 - b[2] )^2 )
+A <- - 1
+g <- function(b) b[1] / ( 1 - b[2] ) - A
+g.grad <- function(b) c( 1 / ( 1 - b[2] ), b[1] / ( 1 - b[2] )^2 )
 ```
 
-Note that the current version of the package only allows for single equation restrictions to be tested.  Extending this is a point for further development.  In the meantime, multiple restrictions can be implemented as a sum of squares of individual restrictions.  To test the restriction, we first solve the restricted model, using the auxiliary inputs `g.i` and , then test that $g(b)=0$.
+Note that the current version of the package only allows for single equation restrictions to be tested.  Extending this is a point for further development.  In the meantime, multiple restrictions can be implemented as a sum of squares of individual restrictions.  
 
-```{r include=FALSE}
-sol.2.step.rest <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init,
+To test the restriction, we first solve the restricted model, using the auxilary argument `g.i`, and then test that $g(b)=0$.
+
+```{r}
+sol.2.step.rest <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init,
                       method='twostep.indiv', g.i=g, g.i.grad=g.grad )
-wald.test.g <- gsc.wald.wrapper( dta, dep.var = 'y', indep.var = c('D1','D2'),
+wald.test.g <- gsc.wald.wrapper( pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'),
                                  sol.rest = sol.2.step.rest, n.boot = 10000 )
 ```
 
@@ -175,17 +169,19 @@ summary(wald.test.g)
 plot(wald.test.g)
 ```
 
-With a p-value of over 0.98, the hypothesis cannot be rejected at any reasonable significance level.  This is  relief, as it is false; when evaluated at the true value of $b=(1,2)$, $g(b)=0$.  We can check that a false hypothesis is rejected by re-solving the under a false restriction:
+With a p-value of over 0.98, the hypothesis cannot be rejected at any reasonable significance level.  This is relief, as it is true; when evaluated at the true value of $b=(1,2)$, $g(b)=0$.  
+
+We can also check that a false hypothesis is rejected by re-solving the under a false restriction:
 
 ```{r include=FALSE}
-rest.val <- 2
-sol.2.step.rest.2 <- gsc.wrapper(dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init,
+A <- 2
+sol.2.step.rest.2 <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init,
                       method='twostep.indiv', g.i=g, g.i.grad=g.grad )
-wald.test.g.2 <- gsc.wald.wrapper( dta, dep.var = 'y', indep.var = c('D1','D2'),
+wald.test.g.2 <- gsc.wald.wrapper( pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'),
                                  sol.rest = sol.2.step.rest.2, n.boot = 10000 )
 ```
 
-The resulting p-value is close to 0.02.
+The resulting p-value is close to 0.02.  That is, we can comfortably reject the hypothesis.
 
 ```{r}
 summary(wald.test.g.2)

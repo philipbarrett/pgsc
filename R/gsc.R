@@ -128,20 +128,48 @@ gsc.df.convert <- function( dta, dep.var='y', indep.var=c('D1','D2') ){
 
 gsc.wrapper <- function(dta, dep.var, indep.var, b.init, method, sol.it=NULL, wt.init=NULL, 
                         print.level=0, g.i=NULL, g.i.grad=NULL, ... ){
-# Wrapper function for GSC estimation
-#
-# @param dta A data frame
-# @param dep.var A string defining the dependent variable
-# @param indep.var A vector of strings defining the independent (treatement) variables
-# @param b.init An initial value for the treatment variable coefficients. Must have same 
-#           length as `indep.var`
-# @param method The GSC iteration method to be used. See \link{Details} for further details
-# @params sol.it The first step solution used in the two-step methods. If omitted, 
-#           a new one-step solution is computed.
-# 
-# @details
+#' Wrapper function for GSC estimation
+#'
+#' @param dta A data frame
+#' @param dep.var A string defining the dependent variable
+#' @param indep.var A vector of strings defining the independent (treatement) variables
+#' @param b.init An initial value for the treatment variable coefficients. Must have same 
+#'           length as `indep.var`
+#' @param method The GSC iteration method to be used. Must be one of:
+#' \itemize{
+#'     \item{\code{onestep}: "Plain" GSC solution, without weights}
+#'     \item{\code{twostep.aggte}: Observations weighted by unit MSEs from the one-step solution.}
+#'     \item{\code{twostep.indiv}: Observations weighted by unit MSEs from individual, unit-by-unit unweighted solutions.}
+#' }
+#' @param sol.it The first step solution used in the two-step methods. If omitted, 
+#'           a new one-step solution is computed.
+#' @param wt.init An initial value for the weighting matrix
+#' @param print.level The level of detail provided in the printed output
+#' @param g.i A function defining a restriction on the parameters.  Used in hypothesis testing.
+#' @param g.i.grad The gradient of \code{g.i}.
+#' 
+#' @return Returns the point estimate of the model as a \code{gsc} object, a list with entries:
+#' \describe{
+#'     \item{b}{The point estimate of the coefficients on the dependent variables}
+#'     \item{diff}{The difference between successive iterations}
+#'     \item{err}{The maximum error on the within-iteration optimization problems}
+#'     \item{it}{Number of iterations require to solve}
+#'     \item{sig.i}{The unit-specific MSEs from the solution}
+#'     \item{W}{The "full" weighting matrix for counterfactuals, containing own-unit weights (all zero) and unit-N weights}
+#'     \item{wt}{The "minimal" weighting matrix, omitting own-unit weights and weights on unit N (which can be computed as one-minus-rowsum)}
+#' }
+#' 
+#' @details See the vignette "Using \code{pgsc}" for an extended example.
+#' @examples
+#' data("pgsc.dta")
+#' sol <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), 
+#' b.init = c(0,0), method='onestep' )
+#' summary(sol)
+#' g.i <- function(b) b[1] ; g.i.grad <- function(b) c(1,0)
+#' sol.r <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), 
+#' b.init = sol$b, method='onestep', g.i=g.i, g.i.grad=g.i.grad )
+#' summary(sol.r)
   
-  # GSC wrapper for point estimates
   l.Y.D <- gsc.df.convert( dta, dep.var, indep.var )
   Y <- l.Y.D$Y ; D <- l.Y.D$D
   NN <- dim(D)[1] ; MM <- dim(D)[2] ; TT <- dim(D)[3] 

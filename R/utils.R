@@ -1,6 +1,6 @@
 #####################################################################################
 # utils.R
-# Provides utility functions: a boostsrap function and an OLS-conversion function
+# Provides utility functions: a bootstsrap function and an OLS-conversion function
 # Philip Barrett
 # Washington, DC, 16sep2018
 #####################################################################################
@@ -32,10 +32,10 @@ summary.gsc.wald <- function(x){
 }
 
 plot.gsc.wald <- function(x){
-  plot( density( x$S.boot ), main='Boostrap Wald test densities',
+  plot( density( x$S.boot ), main='Bootstrap Wald test densities',
         xlab='', ylab='', xlim=range(x$S.boot), lwd=2 )
   abline( v=x$S, col='red', lty=2, lwd=2 )
-  legend('topright', c('Boostrapped Wald density', 'Sample Wald statistic'), 
+  legend('topright', c('Bootstrapped Wald density', 'Sample Wald statistic'), 
          lwd=2, lty=1:2, col=c('black','red'), bty='n')
 }
 
