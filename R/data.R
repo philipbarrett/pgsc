@@ -1,10 +1,10 @@
 #' Synthetic data for PGSC testing.
 #'
-#' A dataset with an outcome griven by a treatment and a set of factors.
+#' A dataset with an outcome given by a treatment and a set of factors.
 #'
 #' @format A data frame with 750 rows and 8 variables:
 #' \describe{
-#'   \item{n}{The unit, here labelled as a US state}
+#'   \item{n}{The unit, here labeled as a US state}
 #'   \item{t}{The time period}
 #'   \item{y}{The outcome variable}
 #'   \item{D1}{The first treatment variable}

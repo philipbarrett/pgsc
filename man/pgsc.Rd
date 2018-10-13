@@ -12,7 +12,7 @@ pgsc(dta, dep.var, indep.var, b.init, method, sol.it = NULL, wt.init = NULL,
 
 \item{dep.var}{A string defining the dependent variable}
 
-\item{indep.var}{A vector of strings defining the independent (treatement) variables}
+\item{indep.var}{A vector of strings defining the independent (treatment) variables}
 
 \item{b.init}{An initial value for the treatment variable coefficients. Must have same 
 length as `indep.var`}

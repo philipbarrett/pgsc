@@ -5,7 +5,7 @@ Version: 1.0
 Date: 2018-09-13
 Author: Philip Barrett
 Maintainer: Philip Barrett <pobarrett@gmail.com>
-Description: Computes the generalized synthetic control estimator desribed in
+Description: Computes the generalized synthetic control estimator described in
     Powell's 2017 paper "Synthetic Control Estimation Beyond Case Studies: Does the
     Minimum Wage Reduce Employment?"
 License: GPL-2

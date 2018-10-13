@@ -24,7 +24,7 @@ Returns the wald test as \code{gsc.wald} object, a list with entries:
 \describe{
     \item{b}{The point estimate of the coefficients on the dependent variables}
     \item{S}{The Wald statistic}
-    \item{s.boot}{The booststrapped Wald statistic}
+    \item{s.boot}{The bootstrapped Wald statistic}
     \item{p.value}{The p-value for the Wald statistic.}
 }
 }

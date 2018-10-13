@@ -132,7 +132,7 @@ pgsc <- function(dta, dep.var, indep.var, b.init, method, sol.it=NULL, wt.init=N
 #'
 #' @param dta A data frame
 #' @param dep.var A string defining the dependent variable
-#' @param indep.var A vector of strings defining the independent (treatement) variables
+#' @param indep.var A vector of strings defining the independent (treatment) variables
 #' @param b.init An initial value for the treatment variable coefficients. Must have same 
 #'           length as `indep.var`
 #' @param method The GSC iteration method to be used. Must be one of:
