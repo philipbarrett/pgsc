@@ -1,6 +1,6 @@
 Package: pgsc
 Type: Package
-Title: Computes Powell's generalized synthetic control estimator
+Title: Computes Powell's Generalized Synthetic Control Estimator
 Version: 1.0.0
 Date: 2018-09-13
 Author: Philip Barrett
