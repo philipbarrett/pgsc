@@ -1,7 +1,7 @@
 Package: pgsc
 Type: Package
 Title: Computes Powell's generalized synthetic control estimator
-Version: 1.0
+Version: 1.0.0
 Date: 2018-09-13
 Author: Philip Barrett
 Maintainer: Philip Barrett <pobarrett@gmail.com>
@@ -15,7 +15,7 @@ Depends:
     nloptr,
     reshape2
 LinkingTo: Rcpp, RcppArmadillo
-RoxygenNote: 5.0.1
+RoxygenNote: 6.1.0
 Suggests: knitr,
     rmarkdown,
     plm

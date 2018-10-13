@@ -4,8 +4,9 @@
 \alias{pgsc}
 \title{Wrapper function for GSC estimation}
 \usage{
-pgsc(dta, dep.var, indep.var, b.init, method, sol.it = NULL, wt.init = NULL,
-  print.level = 0, g.i = NULL, g.i.grad = NULL, ...)
+pgsc(dta, dep.var, indep.var, b.init, method, sol.it = NULL,
+  wt.init = NULL, print.level = 0, g.i = NULL, g.i.grad = NULL,
+  ...)
 }
 \arguments{
 \item{dta}{A data frame}
@@ -65,4 +66,3 @@ sol.r <- pgsc(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'),
 b.init = sol$b, method='onestep', g.i=g.i, g.i.grad=g.i.grad )
 summary(sol.r)
 }
-

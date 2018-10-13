@@ -4,7 +4,8 @@
 \alias{pgsc.wald.test}
 \title{A wrapper for the wald test of a restricted solution}
 \usage{
-pgsc.wald.test(dta, dep.var, indep.var, sol.rest, n.boot = 10000, seed = 42)
+pgsc.wald.test(dta, dep.var, indep.var, sol.rest, n.boot = 10000,
+  seed = 42)
 }
 \arguments{
 \item{dta}{A dataframe}
@@ -43,4 +44,3 @@ wald <- pgsc.wald.test( pgsc.dta, 'y', indep.var = c('D1','D2'), sol.r )
 summary(wald)
 plot(wald)
 }
-

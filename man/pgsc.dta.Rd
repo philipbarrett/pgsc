@@ -25,4 +25,3 @@ pgsc.dta
 A dataset with an outcome given by a treatment and a set of factors.
 }
 \keyword{datasets}
-

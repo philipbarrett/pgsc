@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: rmarkdown::pdf_document
 bibliography: biblio.bib
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Estimating and testing Generalized Synthetic Control models with `pgsc`.}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
