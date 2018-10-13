@@ -1,3 +1,7 @@
 useDynLib(pgsc, .registration=TRUE)
 importFrom(Rcpp, evalCpp)
-exportPattern("^[[:alpha:]]+")
+export(pgsc)
+export(pgsc.wald.test)
+S3method(summary, gsc)
+S3method(summary, gsc.wald)
+S3method(plot, gsc.wald)

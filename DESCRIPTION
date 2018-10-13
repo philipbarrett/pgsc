@@ -1,7 +1,7 @@
 Package: pgsc
 Type: Package
 Title: Computes Powell's generalized synthetic control estimator
-Version: 0.1
+Version: 1.0
 Date: 2018-09-13
 Author: Philip Barrett
 Maintainer: Philip Barrett <pobarrett@gmail.com>
@@ -10,6 +10,7 @@ Description: Computes the generalized synthetic control estimator desribed in
     Minimum Wage Reduce Employment?"
 License: GPL-2
 Depends:
+    R (>= 2.10),
     Rcpp (>= 0.12.18),
     nloptr,
     reshape2

@@ -87,7 +87,7 @@ gsc.wald.boot <- function( s.i, n.it=1000, seed=42 ){
   return(v.s)
 }
 
-gsc.wald.wrapper <- function( dta, dep.var, indep.var, sol.rest, n.boot=10000, seed=42 ){
+pgsc.wald.test <- function( dta, dep.var, indep.var, sol.rest, n.boot=10000, seed=42 ){
 #' A wrapper for the wald test of a restricted solution
 #' 
 #' @param dta A dataframe
@@ -108,9 +108,9 @@ gsc.wald.wrapper <- function( dta, dep.var, indep.var, sol.rest, n.boot=10000, s
 #' @examples
 #' data("pgsc.dta")
 #' g.i <- function(b) b[1] ; g.i.grad <- function(b) c(1,0)
-#' sol.r <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), 
+#' sol.r <- pgsc(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), 
 #' b.init = c(0,1), method='onestep', g.i=g.i, g.i.grad=g.i.grad )
-#' wald <- gsc.wald.wrapper( pgsc.dta, 'y', indep.var = c('D1','D2'), sol.r )
+#' wald <- pgsc.wald.test( pgsc.dta, 'y', indep.var = c('D1','D2'), sol.r )
 #' summary(wald)
 #' plot(wald)
   

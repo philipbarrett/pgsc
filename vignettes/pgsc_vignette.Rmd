@@ -43,7 +43,6 @@ MM <- 2                     # Number of treatments
 RR <- 3                     # Number of covariates
 SS <- 2                     # Number of unit FEs
 QQ <- 3                     # Number of time FEs
-set.seed(42)
 b <- c(1,2)                 # Treatment coefficients
 sq <- matrix( c( 1, .2, .3, -.9, -.1, .2 ), nrow=SS, ncol=QQ )
                             # Weighting matrix on time-varying factors
@@ -87,6 +86,20 @@ pan <- plm( y ~ D1 + D2 + X1 + X2 + X3, pgsc.dta, effect = 'twoways', index = c(
 summary(pan)
 ```
 
+The coefficients on the treatment variables are far from their true values, $(1,2)'$
+
+The source of the bias is that there is an omitted variable, which is time varying but spatially correlated.  This interation of the spatial and time components means that time and period fixed effects cannot recover the true data generating process.  If we have access to (something correlated with) this variable, then panel regression with fixed effects can, of course, recover the true data generating process:
+
+```{r}
+
+### Panel regression
+library(plm)
+pgsc.dta.copy <- pgsc.dta
+pgsc.dta.copy$ov <- c(fes %*% sq %*% t(tfes)) * 2 + rnorm(NN*TT) * 3
+pan.2 <- plm( y ~ D1 + D2 + X1 + X2 + X3 + ov, pgsc.dta.copy, effect = 'twoways', index = c('n','t'))
+summary(pan.2)
+```
+
 
 # The generalized synthetic control estimator: point estimates
 
@@ -101,17 +114,16 @@ $$
 
 In other words, the GSC estimator minimizes the squared difference in outcomes unexplained by the treatment variable between each unit and a unit-specific counterfactual.  The counterfactual itself is a weighted average of the other units, (i.e. the impact of the omitted variables).
 
-The function `gsc.wrapper` computes a number of variants of the GSC estimator using an iterative approach.  It works by optimizing over the coefficients $b$ and the weights $W$ each in turn, iterating until the maximum difference in iterations is suitably close to zero.[^1]
+The function `pgsc` computes a number of variants of the GSC estimator using an iterative approach.  It works by optimizing over the coefficients $b$ and the weights $W$ each in turn, iterating until the maximum difference in iterations is suitably close to zero.[^1]
 
 [^1]: This is slower than solving simultaneously for weights and parameters, but seems to be much more reliable. Presumably, this is because the simultaneous solution is a fourth order problem, whereas the individual weight/coefficient minimization problems are quadratic at each step.  This improves convergence in a numerical optimizer.
 
 ```{r}
 
 ### Compute the point estimate
-library(nloptr)
 wt.init <- matrix( 1 / (NN-1), NN, NN-2 )
 b.init <- pan$coefficients[c('D1','D2')]
-sol.it <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init,
+sol.it <- pgsc(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init,
                       method='onestep')
 summary(sol.it)
 ```
@@ -121,10 +133,10 @@ While the resulting estimates are superior to the fixed effects panel estimates,
 ```{r}
 
 ### Compute point estimates from the two-step estimators
-sol.2.step.aggte <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'),
+sol.2.step.aggte <- pgsc(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'),
                                 b.init = sol.it$b, method='twostep.aggte',
                                 print.level=-1)
-sol.2.step.indiv <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'),
+sol.2.step.indiv <- pgsc(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'),
                                 b.init = sol.2.step.aggte$b, method='twostep.indiv',
                                 print.level=-2)
 sol.compare <- rbind( pan$coefficients[c('D1','D2')], sol.it$b, sol.2.step.aggte$b,
@@ -156,9 +168,9 @@ Note that the current version of the package only allows for single equation res
 To test the restriction, we first solve the restricted model, using the auxilary argument `g.i`, and then test that $g(b)=0$.
 
 ```{r}
-sol.2.step.rest <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init,
+sol.2.step.rest <- pgsc(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init,
                       method='twostep.indiv', g.i=g, g.i.grad=g.grad )
-wald.test.g <- gsc.wald.wrapper( pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'),
+wald.test.g <- pgsc.wald.test( pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'),
                                  sol.rest = sol.2.step.rest, n.boot = 10000 )
 ```
 
@@ -175,9 +187,9 @@ We can also check that a false hypothesis is rejected by re-solving the under a 
 
 ```{r include=FALSE}
 A <- 2
-sol.2.step.rest.2 <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init,
+sol.2.step.rest.2 <- pgsc(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), b.init = b.init,
                       method='twostep.indiv', g.i=g, g.i.grad=g.grad )
-wald.test.g.2 <- gsc.wald.wrapper( pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'),
+wald.test.g.2 <- pgsc.wald.test( pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'),
                                  sol.rest = sol.2.step.rest.2, n.boot = 10000 )
 ```
 

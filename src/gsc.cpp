@@ -6,20 +6,6 @@
 using namespace Rcpp ;
 using namespace arma ;
 
-//' Extract weights
-//' 
-//' Converts an N*(N-2) matrix of minimal weights into a full N*N matrix of weights.
-//' The minimal weights are missing the diagonal entries (which are all zero in the output) 
-//' plus the final column of weights. The full weights include explicit zeroes for the diagonal
-//' and the final column such that each row adds up to one.
-//'
-//' @param wt A N*(N-2) matrix of minimal weights
-//' @param N The number of rows of the input matrix
-//' @return A matrix of full weights
-//' @examples
-//' wt <- matrix( c(.2, .2, .4, .3, .5, .4, .6, .1), nrow = 4, ncol=2 )
-//' W_extract(wt, 4)
-//' 
 // [[Rcpp::export]]
 arma::mat W_extract( arma::mat wt, int N){
 // Extracts the matrix W from wt

@@ -126,7 +126,7 @@ gsc.df.convert <- function( dta, dep.var='y', indep.var=c('D1','D2') ){
 }
 
 
-gsc.wrapper <- function(dta, dep.var, indep.var, b.init, method, sol.it=NULL, wt.init=NULL, 
+pgsc <- function(dta, dep.var, indep.var, b.init, method, sol.it=NULL, wt.init=NULL, 
                         print.level=0, g.i=NULL, g.i.grad=NULL, ... ){
 #' Wrapper function for GSC estimation
 #'
@@ -147,6 +147,7 @@ gsc.wrapper <- function(dta, dep.var, indep.var, b.init, method, sol.it=NULL, wt
 #' @param print.level The level of detail provided in the printed output
 #' @param g.i A function defining a restriction on the parameters.  Used in hypothesis testing.
 #' @param g.i.grad The gradient of \code{g.i}.
+#' @param ... Other arguments to be passed to the optimization
 #' 
 #' @return Returns the point estimate of the model as a \code{gsc} object, a list with entries:
 #' \describe{
@@ -162,11 +163,11 @@ gsc.wrapper <- function(dta, dep.var, indep.var, b.init, method, sol.it=NULL, wt
 #' @details See the vignette "Using \code{pgsc}" for an extended example.
 #' @examples
 #' data("pgsc.dta")
-#' sol <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), 
+#' sol <- pgsc(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), 
 #' b.init = c(0,0), method='onestep' )
 #' summary(sol)
 #' g.i <- function(b) b[1] ; g.i.grad <- function(b) c(1,0)
-#' sol.r <- gsc.wrapper(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), 
+#' sol.r <- pgsc(pgsc.dta, dep.var = 'y', indep.var = c('D1','D2'), 
 #' b.init = sol$b, method='onestep', g.i=g.i, g.i.grad=g.i.grad )
 #' summary(sol.r)
   
