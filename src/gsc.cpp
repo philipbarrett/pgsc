@@ -284,8 +284,8 @@ arma::vec gsc_target_grad_b( int N, int T, arma::mat wt, arma::mat Y,
   
   /** Create gradient from weights **/
   double common = 0 ;                       // The common part of the derivative
-  double sum_d = 0 ;                        // The part of the derivative coming from sum(wt)=1
-  int counter = 0 ;                         // A counter
+  // double sum_d = 0 ;                        // The part of the derivative coming from sum(wt)=1
+  // int counter = 0 ;                         // A counter
   for( int t = 0 ; t < T ; t++ ){
     this_D = D.slice(t) ;                   // Cross-sectional treatments at time t
     for( int i = 0 ; i < N ; i++ ){
