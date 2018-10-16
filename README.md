@@ -1,17 +1,3 @@
----
-output: github_document
----
-
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
-```{r, echo = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.path = "README-"
-)
-```
-
 # pgsc
 
 The goal of pgsc is to provide an estimation and testing framework for Powell's Generalize Synthetic Control method.  This provides consistent estimates in the presence of unobserved spatially-correlated factors in a panel.  Please see the vignette for further details and an extended example.

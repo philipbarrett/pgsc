@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: rmarkdown::pdf_document
 bibliography: biblio.bib
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Estimating and testing Generalized Synthetic Control models with `pgsc`.}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -84,6 +84,20 @@ The panel regression fails to recover the correct value of $b$ due to the correl
 library(plm)
 pan <- plm( y ~ D1 + D2 + X1 + X2 + X3, pgsc.dta, effect = 'twoways', index = c('n','t'))
 summary(pan)
+```
+
+The coefficients on the treatment variables are far from their true values, $(1,2)'$
+
+The source of the bias is that there is an omitted variable, which is time varying but spatially correlated.  This interation of the spatial and time components means that time and period fixed effects cannot recover the true data generating process.  If we have access to (something correlated with) this variable, then panel regression with fixed effects can, of course, recover the true data generating process:
+
+```{r}
+
+### Panel regression
+library(plm)
+pgsc.dta.copy <- pgsc.dta
+pgsc.dta.copy$ov <- c(fes %*% sq %*% t(tfes)) * 2 + rnorm(NN*TT) * 3
+pan.2 <- plm( y ~ D1 + D2 + X1 + X2 + X3 + ov, pgsc.dta.copy, effect = 'twoways', index = c('n','t'))
+summary(pan.2)
 ```
 
 
@@ -186,9 +200,9 @@ summary(wald.test.g.2)
 plot(wald.test.g.2)
 ```
 
-# Todos
+<!-- # Todos -->
 
-Documentation for wrapper and test function.  A plot function for a GSC object, esp weights.
+<!-- Documentation for wrapper and test function.  A plot function for a GSC object, esp weights. -->
 
 
 

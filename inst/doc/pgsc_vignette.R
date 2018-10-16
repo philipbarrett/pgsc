@@ -52,6 +52,15 @@ summary(pan)
 
 ## ------------------------------------------------------------------------
 
+### Panel regression
+library(plm)
+pgsc.dta.copy <- pgsc.dta
+pgsc.dta.copy$ov <- c(fes %*% sq %*% t(tfes)) * 2 + rnorm(NN*TT) * 3
+pan.2 <- plm( y ~ D1 + D2 + X1 + X2 + X3 + ov, pgsc.dta.copy, effect = 'twoways', index = c('n','t'))
+summary(pan.2)
+
+## ------------------------------------------------------------------------
+
 ### Compute the point estimate
 wt.init <- matrix( 1 / (NN-1), NN, NN-2 )
 b.init <- pan$coefficients[c('D1','D2')]
