@@ -21,8 +21,6 @@ The goal of pgsc is to provide an estimation and testing framework for Powell's 
 You can install pgsc from github with:
 
 ```{r gh-installation, eval = FALSE}
-# install.packages("devtools")
-#  ^^ Not yet.  CRAN Submission incomplete
 devtools::install_github("philipbarrett/pgsc")
 ```
 
