@@ -200,9 +200,9 @@ summary(wald.test.g.2)
 plot(wald.test.g.2)
 ```
 
-# Todos
+<!-- # Todos -->
 
-Documentation for wrapper and test function.  A plot function for a GSC object, esp weights.
+<!-- Documentation for wrapper and test function.  A plot function for a GSC object, esp weights. -->
 
 
 
