@@ -193,7 +193,7 @@ wald.test.g.2 <- pgsc.wald.test( pgsc.dta, dep.var = 'y', indep.var = c('D1','D2
                                  sol.rest = sol.2.step.rest.2, n.boot = 10000 )
 ```
 
-The resulting p-value is close to 0.02.  That is, we can comfortably reject the hypothesis.
+The resulting p-value is close to zero, so we can comfortably reject the hypothesis.
 
 ```{r}
 summary(wald.test.g.2)

@@ -1,6 +1,6 @@
 # pgsc
 
-The goal of pgsc is to provide an estimation and testing framework for Powell's Generalize Synthetic Control method.  This provides consistent estimates in the presence of unobserved spatially-correlated factors in a panel.  Please see the vignette for further details and an extended example.
+The goal of pgsc is to provide an estimation and testing framework for Powell's Generalized Synthetic Control method.  This provides consistent estimates in the presence of unobserved spatially-correlated factors in a panel.  Please see the vignette for further details and an extended example.
 
 ## Installation
 
