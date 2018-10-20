@@ -6,8 +6,7 @@ Date: 2018-09-13
 Author: Philip Barrett
 Maintainer: Philip Barrett <pobarrett@gmail.com>
 Description: Computes the generalized synthetic control estimator described in
-    Powell's 2017 paper "Synthetic Control Estimation Beyond Case Studies: Does the
-    Minimum Wage Reduce Employment?".  Provides both point esimates, and hypothesis testing.
+    Powell (2017) <doi:10.7249/WR1142>.  Provides both point esimates, and hypothesis testing.
 License: GPL-2
 Depends:
     R (>= 2.10),
