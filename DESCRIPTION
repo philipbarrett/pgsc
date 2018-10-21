@@ -2,7 +2,7 @@ Package: pgsc
 Type: Package
 Title: Computes Powell's Generalized Synthetic Control Estimator
 Version: 1.0.0
-Date: 2018-09-13
+Date: 2018-10-21
 Author: Philip Barrett
 Maintainer: Philip Barrett <pobarrett@gmail.com>
 Description: Computes the generalized synthetic control estimator described in
@@ -20,3 +20,4 @@ Suggests: knitr,
     plm
 VignetteBuilder: knitr
 URL: https://github.com/philipbarrett/pgsc
+Encoding: UTF-8
