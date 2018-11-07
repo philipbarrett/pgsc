@@ -9,7 +9,7 @@ You can install pgsc from CRAN using:
 install.packages("pgsc")
 ```
 
-This version is stable, and user-friendly.  New features might b availble in the development version on  github, which ca be installed via:
+This version is stable, and user-friendly.  New features might be availble in the development version on  github, which can be installed via:
 
 ```{r gh-installation, eval = FALSE}
 devtools::install_github("philipbarrett/pgsc")
