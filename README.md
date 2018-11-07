@@ -4,7 +4,12 @@ The goal of pgsc is to provide an estimation and testing framework for Powell's 
 
 ## Installation
 
-You can install pgsc from github with:
+You can install pgsc from CRAN using: 
+```{r gh-installation, eval = FALSE}
+install.packages("pgsc")
+```
+
+This version is stable, and user-friendly.  New features might b availble in the development version on  github, which ca be installed via:
 
 ```{r gh-installation, eval = FALSE}
 devtools::install_github("philipbarrett/pgsc")
