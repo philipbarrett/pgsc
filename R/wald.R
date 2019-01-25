@@ -12,10 +12,12 @@ gsc.grad.cl.k <- function(W, Y, D, b, k.idx, sig.i=NULL ){
   NN <- dim(D)[1] ; MM <- length(b) ; TT <- dim(D)[3]   # Dimensions of the problem
   if( is.null(sig.i) ) sig.i <- rep( 1, NN )
   out <- matrix( NA, nrow=NN, ncol=TT)
+  v.b <- if(MM == 1) t(b) else b
+      # Force b to a vector
   for( nn in 1:NN ){
     for( tt in 1:TT ){
       out[nn,tt] <- 1 / sig.i[nn] * ( ( D[nn, k.idx, tt] - sum( D[,k.idx,tt] * W[nn,]) ) * 
-                                        ( Y[nn,tt] - sum( D[nn,,tt] * b ) - sum( W[nn,] * ( Y[,tt] - D[,,tt] %*% b ) ) ) )
+                                        ( Y[nn,tt] - sum( D[nn,,tt] * v.b ) - sum( W[nn,] * ( Y[,tt] - D[,,tt] %*% v.b ) ) ) )
     }
   }
   return(out)
